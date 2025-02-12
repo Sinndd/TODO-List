@@ -8,10 +8,10 @@
       id="new"
       type="text" 
       placeholder="Nouvelle tâche">
-    <button :disabled="newTodo.lenght === 0">Ajouter la tâche</button>
+    <button :disabled="newTodo.length === 0">Ajouter la tâche</button>
   </fieldset>
   </form>
-  <div v-if="todos.lenght === 0">Vous n'avez pas de tâches à effectuer.</div>
+  <div v-if="todos.length === 0">Vous n'avez pas de tâches à effectuer.</div>
   <div v-else>
     <ul>
       <li 
@@ -20,9 +20,10 @@
       :class="{completed: todo.completed}"
       > 
         <label>
-          <input type="checkbox" v-model="todo.completed">
+          <input type="checkbox" v-model="todo.completed" @change="saveTodos">
           {{ todo.title }}
         </label>
+        <button class="delete-button" @click="deleteTodo(todo)">❌</button>
       </li>
     </ul>
     <label>
@@ -33,19 +34,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
-const todos = ref([{
+const todos = ref(JSON.parse(localStorage.getItem('todos')) || [{
   title: 'Tâche de test',
   completed: true,
   date: 1,
 },{
-  title: 'Tâche à faire',
+  title: 'Tâche de test 2',
   completed: false,
   date: 2,
 }])
 const newTodo = ref('')
 const hideCompleted = ref(false)
+
+const saveTodos = () => {
+  localStorage.setItem('todos', JSON.stringify(todos.value))
+}
+
 const addTodo = () => {
   todos.value.push({
     title: newTodo.value,
@@ -53,6 +59,12 @@ const addTodo = () => {
     date: Date.now()
   })
   newTodo.value = ''
+  saveTodos()
+}
+
+const deleteTodo = (todo) => {
+  todos.value = todos.value.filter(t => t !== todo)
+  saveTodos()
 }
 
 const sortedTodos = () => {
@@ -62,6 +74,12 @@ const sortedTodos = () => {
   }
   return sortedTodos
 }
+
+onMounted(() => {
+  todos.value = JSON.parse(localStorage.getItem('todos')) || todos.value
+})
+
+watch(todos, saveTodos, { deep: true })
 
 </script>
 
@@ -77,10 +95,24 @@ fieldset {
   height: 3.125rem;
 }
 
+li {
+  display: flex;
+  justify-content: space-between;
+}
+
 button {
   display: flex;
   align-items: center;
   font-size: small;
+}
+
+.delete-button {
+  background-color: #13171F;
+  border: none;
+  padding: 0;
+  margin-left: 10px;
+  color: white;
+  cursor: pointer;
 }
 
 .completed {
